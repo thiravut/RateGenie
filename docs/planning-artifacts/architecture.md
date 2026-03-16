@@ -9,7 +9,7 @@ inputDocuments:
   - 'docs/planning-artifacts/research/market-ai-ota-price-management-thailand-research-2026-03-12.md'
   - 'docs/brainstorming/brainstorming-session-2026-03-12-001.md'
 workflowType: 'architecture'
-project_name: 'OTA'
+project_name: 'RateGenie'
 user_name: 'Pond'
 date: '2026-03-16'
 ---

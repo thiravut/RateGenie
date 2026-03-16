@@ -17,14 +17,14 @@ classification:
   projectContext: 'greenfield'
 ---
 
-# Product Requirements Document - OTA
+# Product Requirements Document - RateGenie
 
 **Author:** Pond
 **Date:** 2026-03-16
 
 ## Executive Summary
 
-**OTA** คือ AI Revenue Assistant แบบ SaaS B2B ที่ทำให้โรงแรมอิสระในไทยเข้าถึง revenue management ระดับ premium ผ่าน AI ที่เรียนรู้จากผู้เชี่ยวชาญตัวจริง — ส่งคำแนะนำราคาถึงมือเจ้าของผ่าน LINE/Telegram เจ้าของโรงแรมเพียงอ่านคำแนะนำและกดอนุมัติ ระบบจัดการปรับราคาบน OTAs ให้อัตโนมัติ
+**RateGenie** คือ AI Revenue Assistant แบบ SaaS B2B ที่ทำให้โรงแรมอิสระในไทยเข้าถึง revenue management ระดับ premium ผ่าน AI ที่เรียนรู้จากผู้เชี่ยวชาญตัวจริง — ส่งคำแนะนำราคาถึงมือเจ้าของผ่าน LINE/Telegram เจ้าของโรงแรมเพียงอ่านคำแนะนำและกดอนุมัติ ระบบจัดการปรับราคาบน OTAs ให้อัตโนมัติ
 
 กลุ่มเป้าหมายหลักคือโรงแรมอิสระ (57.65% ของตลาดไทย) ที่กว่า 90% ยังไม่เคยใช้ Revenue Management Software ส่งผลให้ 48% สูญเสียรายได้ทุกสัปดาห์จากการปรับราคาไม่ทันสถานการณ์ โซลูชันระดับสากลมีราคาสูง (€119-$2,000+/เดือน) ไม่รองรับภาษาไทย และไม่เข้าใจบริบทตลาดท้องถิ่น
 
@@ -32,7 +32,7 @@ classification:
 
 ### สิ่งที่ทำให้พิเศษ
 
-1. **AI จาก Domain Expert จริง** — องค์ความรู้จากผู้เชี่ยวชาญด้านราคาโรงแรมชั้นนำที่มีค่าตัวสูงและเวลาจำกัด OTA แปลง wisdom นี้เป็น AI ให้โรงแรมทุกขนาดเข้าถึงได้
+1. **AI จาก Domain Expert จริง** — องค์ความรู้จากผู้เชี่ยวชาญด้านราคาโรงแรมชั้นนำที่มีค่าตัวสูงและเวลาจำกัด RateGenie แปลง wisdom นี้เป็น AI ให้โรงแรมทุกขนาดเข้าถึงได้
 2. **LINE/Telegram-First Approach** — คนไทยใช้ LINE ทุกวัน การส่งคำแนะนำผ่าน LINE/Telegram + กดอนุมัติทันทีเป็น unfair advantage ที่คู่แข่งต่างชาติทำไม่ได้ง่ายๆ
 3. **Progressive Automation (Trust Ladder)** — "AI แนะนำ คุณตัดสินใจ" (MVP-0) → "AI ทำอัตโนมัติภายในกรอบ" (MVP-1) ค่อยๆ เพิ่ม automation เมื่อสร้างความไว้ใจแล้ว
 4. **Why Now** — AI technology ในปี 2026 พร้อมสร้าง pricing intelligence ระดับที่เคยต้องพึ่งคนเท่านั้น ขณะที่ยังไม่มีผู้เล่นในตำแหน่ง "AI pricing + ภาษาไทย + ราคาย่อมเยา" สำหรับ SME โรงแรมไทย
@@ -167,9 +167,9 @@ classification:
 
 ### Journey 1: คุณวิชัย — เจ้าของโรงแรมที่อยากปลดล็อกเวลาคืน (Primary - Success Path)
 
-**Opening Scene:** คุณวิชัยนั่งอยู่ในออฟฟิศเล็กๆ หลังเคาน์เตอร์โรงแรม 80 ห้องที่ภูเก็ต เพิ่งจ่ายเงินเดือนให้คุณแพร revenue manager ไป 45,000 บาท ขณะที่ occupancy เดือนนี้แค่ 62% — เขารู้ว่าจ้างคนเก่งมาแล้วแต่ก็ยังรู้สึกว่า "ทำไมมันไม่ดีขึ้นเท่าที่หวัง" เพื่อนเจ้าของโรงแรมใน Facebook group โพสต์ว่า "ลองใช้ OTA มา 2 สัปดาห์ revenue ขึ้น 12% โดยไม่ต้องทำอะไร"
+**Opening Scene:** คุณวิชัยนั่งอยู่ในออฟฟิศเล็กๆ หลังเคาน์เตอร์โรงแรม 80 ห้องที่ภูเก็ต เพิ่งจ่ายเงินเดือนให้คุณแพร revenue manager ไป 45,000 บาท ขณะที่ occupancy เดือนนี้แค่ 62% — เขารู้ว่าจ้างคนเก่งมาแล้วแต่ก็ยังรู้สึกว่า "ทำไมมันไม่ดีขึ้นเท่าที่หวัง" เพื่อนเจ้าของโรงแรมใน Facebook group โพสต์ว่า "ลองใช้ RateGenie มา 2 สัปดาห์ revenue ขึ้น 12% โดยไม่ต้องทำอะไร"
 
-**Rising Action:** คุณวิชัยสมัคร free trial ใส่ชื่อโรงแรม ระบบดึงข้อมูลจาก Agoda/Booking.com ให้เอง ทีม OTA ช่วย setup เชื่อมต่อ OTA ให้ วันแรกเขาเปิด dashboard เห็นราคาทุก OTA ของตัวเองอยู่ในหน้าเดียว วันที่ 3 LINE ส่ง notification: "AI แนะนำขึ้นราคา Deluxe Room +200 บาท สำหรับวันศุกร์-อาทิตย์นี้ เพราะ booking pace สูงกว่าปกติ 30%" เขากดลิงก์ เข้า web เห็นเหตุผลชัดเจน กด [อนุมัติ]
+**Rising Action:** คุณวิชัยสมัคร free trial ใส่ชื่อโรงแรม ระบบดึงข้อมูลจาก Agoda/Booking.com ให้เอง ทีม RateGenie ช่วย setup เชื่อมต่อ OTA ให้ วันแรกเขาเปิด dashboard เห็นราคาทุก OTA ของตัวเองอยู่ในหน้าเดียว วันที่ 3 LINE ส่ง notification: "AI แนะนำขึ้นราคา Deluxe Room +200 บาท สำหรับวันศุกร์-อาทิตย์นี้ เพราะ booking pace สูงกว่าปกติ 30%" เขากดลิงก์ เข้า web เห็นเหตุผลชัดเจน กด [อนุมัติ]
 
 **Climax:** สิ้นเดือนแรก dashboard แสดง "Revenue เพิ่มขึ้น 14% เทียบกับเดือนก่อน" คุณวิชัยเริ่มคิด — ถ้า AI ทำได้แบบนี้ ยังต้องจ้าง revenue manager เต็มเวลาอีกไหม?
 
@@ -181,9 +181,9 @@ classification:
 
 **Opening Scene:** คุณแพรเป็น revenue manager อิสระดูแล 5 โรงแรมทั่วภูเก็ตและกระบี่ ทุกเช้าเปิด extranet ของ Agoda, Booking.com, Expedia ทีละโรงแรม (15 tabs ขั้นต่ำ) ใช้เวลาเกือบทั้งวัน มีโรงแรมอีก 3 แห่งติดต่อมาแต่ปฏิเสธเพราะไม่มีเวลา
 
-**Rising Action:** เจ้าของโรงแรมที่ดูแลคนหนึ่งแนะนำให้ลอง OTA คุณแพรเชื่อมโรงแรม 5 แห่งเข้าระบบ AI วิเคราะห์ให้แล้วสรุปว่า "โรงแรม A ควรขึ้นราคา weekend +15%, โรงแรม B ควรลด weekday -10%" — สิ่งที่เธอใช้เวลา 3 ชั่วโมงวิเคราะห์เอง AI ทำให้ใน 3 วินาที
+**Rising Action:** เจ้าของโรงแรมที่ดูแลคนหนึ่งแนะนำให้ลอง RateGenie คุณแพรเชื่อมโรงแรม 5 แห่งเข้าระบบ AI วิเคราะห์ให้แล้วสรุปว่า "โรงแรม A ควรขึ้นราคา weekend +15%, โรงแรม B ควรลด weekday -10%" — สิ่งที่เธอใช้เวลา 3 ชั่วโมงวิเคราะห์เอง AI ทำให้ใน 3 วินาที
 
-**Climax:** สัปดาห์ที่ 2 คุณแพรทำงานเสร็จก่อนเที่ยง ตัดสินใจรับดูแลโรงแรมเพิ่มอีก 3 แห่ง แนะนำให้ทุกโรงแรมที่ดูแลใช้ OTA
+**Climax:** สัปดาห์ที่ 2 คุณแพรทำงานเสร็จก่อนเที่ยง ตัดสินใจรับดูแลโรงแรมเพิ่มอีก 3 แห่ง แนะนำให้ทุกโรงแรมที่ดูแลใช้ RateGenie
 
 **Resolution:** 3 เดือนต่อมา คุณแพรดูแล 10 โรงแรมโดยใช้เวลาไม่ถึงครึ่งวัน เปลี่ยนบทบาทจาก "ทำเอง" เป็น "ตรวจสอบที่ AI ทำ" กลายเป็น power user ที่พาโรงแรมใหม่เข้าระบบทุกครั้ง
 
@@ -201,9 +201,9 @@ classification:
 
 **→ Requirements:** Reject + structured feedback, AI learning loop, Recommendation history + audit trail, Approval rate tracking
 
-### Journey 4: ทีม OTA (Admin) — Onboarding และ monitor ระบบ
+### Journey 4: ทีม RateGenie (Admin) — Onboarding และ monitor ระบบ
 
-**Opening Scene:** ทีม OTA ได้ lead จากคุณแพร 3 โรงแรมใหม่ ต้อง onboard และ monitor ว่า AI ทำงานถูกต้อง
+**Opening Scene:** ทีม RateGenie ได้ lead จากคุณแพร 3 โรงแรมใหม่ ต้อง onboard และ monitor ว่า AI ทำงานถูกต้อง
 
 **Rising Action:** เข้า admin dashboard setup: เชื่อมต่อ OTA credentials, ตั้งค่า competitor set, กำหนด pricing boundaries พบ sync error กับ Booking.com → แก้ภายใน 15 นาที (re-authenticate)
 
@@ -211,7 +211,7 @@ classification:
 
 **→ Requirements:** Admin dashboard (system health, sync status, error logs), Hotel onboarding workflow, API monitoring + alerting, User management
 
-### Journey 5: OTA ↔ OTA API — Data Flow (Integration)
+### Journey 5: RateGenie ↔ OTA API — Data Flow (Integration)
 
 **Data Flow:**
 1. **Inbound:** ดึง booking data (จองใหม่, ยกเลิก, ราคา, availability) จาก Agoda/Booking.com
@@ -229,7 +229,7 @@ classification:
 | **คุณวิชัย (Success)** | OTA integration, AI recommendations, LINE/Telegram notifications, Revenue dashboard |
 | **คุณแพร (Power User)** | Multi-property view, Batch operations, Portfolio insights, Referral flow |
 | **คุณวิชัย (Edge Case)** | Reject + feedback flow, AI learning loop, Audit trail, Transparency |
-| **ทีม OTA (Admin)** | Admin dashboard, System monitoring, Onboarding workflow, User management |
+| **ทีม RateGenie (Admin)** | Admin dashboard, System monitoring, Onboarding workflow, User management |
 | **API Integration** | OTA adapters, Retry logic, Transaction logs, Error handling, Sync monitoring |
 
 ## Domain-Specific Requirements
@@ -301,7 +301,7 @@ classification:
 | **Owner** | ทุกอย่าง — ดู/แก้ราคา, approve AI, ตั้งค่า rules, ดู revenue, จัดการ users, เลือก package | คุณวิชัย |
 | **Revenue Manager** | ดู/แก้ราคา, approve AI, ตั้งค่า rules, ดู revenue — ไม่สามารถจัดการ billing/users | คุณแพร |
 | **Front Desk** | ดูราคาแนะนำ walk-in เท่านั้น — read-only | น้องมิ้นท์ |
-| **System Admin** | จัดการทุกโรงแรม, onboarding, monitor system health, AI quality | ทีม OTA |
+| **System Admin** | จัดการทุกโรงแรม, onboarding, monitor system health, AI quality | ทีม RateGenie |
 
 ### Subscription Tiers
 

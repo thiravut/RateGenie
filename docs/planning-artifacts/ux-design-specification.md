@@ -8,7 +8,7 @@ inputDocuments:
   - 'docs/planning-artifacts/epics.md'
 ---
 
-# UX Design Specification — OTA
+# UX Design Specification — RateGenie
 
 **Author:** Pond
 **Date:** 2026-03-17
@@ -19,7 +19,7 @@ inputDocuments:
 
 ### Project Vision
 
-OTA เป็น AI-powered revenue management platform สำหรับโรงแรมอิสระในไทย ที่ทำให้เจ้าของโรงแรมเข้าถึง revenue expertise ระดับ premium ผ่าน AI — แค่อ่านคำแนะนำ กดอนุมัติ ไม่ต้องเป็นผู้เชี่ยวชาญเอง
+RateGenie เป็น AI-powered revenue management platform สำหรับโรงแรมอิสระในไทย ที่ทำให้เจ้าของโรงแรมเข้าถึง revenue expertise ระดับ premium ผ่าน AI — แค่อ่านคำแนะนำ กดอนุมัติ ไม่ต้องเป็นผู้เชี่ยวชาญเอง
 
 ### Target Users
 
@@ -46,7 +46,7 @@ OTA เป็น AI-powered revenue management platform สำหรับโร
 
 ### Defining Experience
 
-**Core Action:** "อ่านคำแนะนำ → กดอนุมัติ" — นี่คือ interaction ที่สำคัญที่สุดของ OTA ทั้งหมด ถ้า flow นี้ง่ายและรวดเร็ว ผู้ใช้จะกลับมาทุกวัน
+**Core Action:** "อ่านคำแนะนำ → กดอนุมัติ" — นี่คือ interaction ที่สำคัญที่สุดของ RateGenie ทั้งหมด ถ้า flow นี้ง่ายและรวดเร็ว ผู้ใช้จะกลับมาทุกวัน
 
 **Core Loop:**
 ```
@@ -149,19 +149,19 @@ LINE/Telegram notification → กด link → เห็นคำแนะนำ
 
 **1. LINE Official Account (ตัวอย่าง: SCB, Grab)**
 
-ผู้ใช้เป้าหมายของ OTA ใช้ LINE ทุกวัน — SCB และ Grab ทำ notification ผ่าน LINE ได้ดีมาก:
+ผู้ใช้เป้าหมายของ RateGenie ใช้ LINE ทุกวัน — SCB และ Grab ทำ notification ผ่าน LINE ได้ดีมาก:
 - **Flex Message** ที่อ่านง่าย มีโครงสร้างชัด สีแยกหมวด
 - **Quick action buttons** กดได้ทันทีไม่ต้อง navigate
 - **สรุปสั้นก่อน** แล้วมี link "ดูรายละเอียด" สำหรับคนที่ต้องการข้อมูลเพิ่ม
-- **บทเรียน:** Notification ของ OTA ต้องอ่านจบใน 3 วินาที + กดได้ใน 1 tap
+- **บทเรียน:** Notification ของ RateGenie ต้องอ่านจบใน 3 วินาที + กดได้ใน 1 tap
 
 **2. Agoda (Extranet / Hotel Dashboard)**
 
-คู่แข่งโดยตรงที่ผู้ใช้ OTA จะคุ้นเคย:
+คู่แข่งโดยตรงที่ผู้ใช้ RateGenie จะคุ้นเคย:
 - **Calendar view** แสดงราคา + availability ต่อวัน — เข้าใจง่าย
 - **Color coding** สีเขียว (ว่าง), สีแดง (เต็ม), สีเหลือง (เกือบเต็ม)
 - **Bulk edit** ปรับราคาหลายวันพร้อมกัน
-- **บทเรียน:** ผู้ใช้คุ้น Agoda extranet อยู่แล้ว OTA ไม่ควรต่างจนเรียนรู้ใหม่ แต่ต้อง **ง่ายกว่า**
+- **บทเรียน:** ผู้ใช้คุ้น Agoda extranet อยู่แล้ว RateGenie ไม่ควรต่างจนเรียนรู้ใหม่ แต่ต้อง **ง่ายกว่า**
 
 **3. Robinhood (FinTech — AI Recommendation UX)**
 
@@ -170,7 +170,7 @@ LINE/Telegram notification → กด link → เห็นคำแนะนำ
 - **เหตุผลสั้นๆ** ในตัว card + expand เพื่อดูรายละเอียด
 - **สีเขียว/แดง** บอกทิศทางชัดเจน (ขึ้น/ลง)
 - **Swipe to approve** gesture ที่รวดเร็ว
-- **บทเรียน:** Recommendation cards ของ OTA ต้องอ่านจบใน 5 วินาที + approve ใน 1 กด
+- **บทเรียน:** Recommendation cards ของ RateGenie ต้องอ่านจบใน 5 วินาที + approve ใน 1 กด
 
 ### Transferable UX Patterns
 
@@ -203,14 +203,14 @@ LINE/Telegram notification → กด link → เห็นคำแนะนำ
 ### Design Inspiration Strategy
 
 **What to Adopt:**
-- **LINE Flex Message pattern** — สำหรับ notification ของ OTA
+- **LINE Flex Message pattern** — สำหรับ notification ของ RateGenie
 - **Card-based recommendations** — จาก FinTech apps สำหรับ AI recommendation UI
 - **Color coding system** (เขียว/แดง/เหลือง) — จาก Agoda extranet
 - **Big number + trend** — จาก analytics dashboards
 
 **What to Adapt:**
 - **Agoda calendar view** → ทำให้ง่ายกว่า (แสดงแค่ราคา + สี ไม่ต้องมี availability grid ซับซ้อน)
-- **Bottom tab navigation** → ปรับเป็น 4 tabs สำหรับ OTA: หน้าหลัก / ราคา / AI แนะนำ / ตั้งค่า
+- **Bottom tab navigation** → ปรับเป็น 4 tabs สำหรับ RateGenie: หน้าหลัก / ราคา / AI แนะนำ / ตั้งค่า
 - **Progressive disclosure** → Level 1 สรุป (dashboard) → Level 2 รายละเอียด (price view) → Level 3 ประวัติ (history)
 
 **What to Avoid:**
@@ -240,7 +240,7 @@ Architecture document ระบุไว้แล้วว่าใช้ React-
 **Tech Stack:**
 - `react-bootstrap` — React components
 - `bootstrap` 5.3+ — CSS framework
-- Custom SCSS variables — override Bootstrap defaults สำหรับ OTA brand
+- Custom SCSS variables — override Bootstrap defaults สำหรับ RateGenie brand
 - Google Fonts — IBM Plex Thai / Sarabun สำหรับ Thai typography
 
 **Component Strategy:**
@@ -258,7 +258,7 @@ Architecture document ระบุไว้แล้วว่าใช้ React-
 **Brand Colors (SCSS variables override):**
 
 ```scss
-// OTA Brand Colors
+// RateGenie Brand Colors
 $primary: #2563EB;      // น้ำเงินหลัก — trust, professional
 $success: #16A34A;      // เขียว — revenue เพิ่ม, approve, ดี
 $danger: #DC2626;       // แดง — revenue ลด, alert, ต้องสนใจ
@@ -301,17 +301,17 @@ $headings-font-weight: 600;  // หัวข้อหนาชัด
 
 ### Defining Experience
 
-**"อ่านเหตุผล กดอนุมัติ"** — เหมือน Tinder ที่ "Swipe to match" OTA คือ **"Read reason, tap approve"**
+**"อ่านเหตุผล กดอนุมัติ"** — เหมือน Tinder ที่ "Swipe to match" RateGenie คือ **"Read reason, tap approve"**
 
 ผู้ใช้จะอธิบายให้เพื่อนฟังว่า: *"ทุกเช้า LINE ส่งมาว่า AI แนะนำให้ขึ้นราคาห้อง Deluxe 200 บาทวันศุกร์ เพราะ booking pace สูง ฉันกดอนุมัติ จบ ใช้เวลาไม่ถึงนาที"*
 
 ### User Mental Model
 
-**ปัจจุบัน (ก่อนใช้ OTA):**
+**ปัจจุบัน (ก่อนใช้ RateGenie):**
 - คุณวิชัย: "จ้าง revenue manager มาดูให้ → เขาบอกว่าควรปรับราคาเท่าไหร่ → ฉันบอกตกลง → เขาไปปรับใน extranet"
 - คุณแพร: "เปิด extranet ทีละ OTA → ดูตัวเลข → คิดในหัว → ปรับราคา → ทำซ้ำกับโรงแรมถัดไป"
 
-**หลังใช้ OTA:**
+**หลังใช้ RateGenie:**
 - Mental model เดิม **ไม่เปลี่ยน** — ยังเป็น "มีคนบอก → ฉันตัดสินใจ" แค่เปลี่ยน "คน" เป็น "AI" และเปลี่ยน "โทรมาบอก" เป็น "LINE ส่งมา"
 - **ไม่ต้องเรียนรู้ mental model ใหม่** — นี่คือข้อได้เปรียบ
 
@@ -332,7 +332,7 @@ $headings-font-weight: 600;  // หัวข้อหนาชัด
 - Approve/reject buttons → ผู้ใช้คุ้นเคยจาก banking apps
 - Notification → link → action → done → คุ้นเคยจาก food delivery apps
 
-**Novel combination ของ OTA:**
+**Novel combination ของ RateGenie:**
 - **"AI + เหตุผลภาษาไทย + 1-tap approve ผ่าน LINE"** — ไม่มีใครทำแบบนี้ใน hospitality
 - ไม่ต้องสอน pattern ใหม่ แค่ **รวม patterns ที่คุ้นเคยเข้าด้วยกัน** ในบริบท hotel pricing
 
@@ -343,7 +343,7 @@ $headings-font-weight: 600;  // หัวข้อหนาชัด
 ```
 [LINE Flex Message]
 ┌─────────────────────────┐
-│ 🏨 OTA — คำแนะนำราคาใหม่  │
+│ 🏨 RateGenie — คำแนะนำราคาใหม่  │
 │                         │
 │ มีคำแนะนำ 3 รายการ       │
 │ สำหรับ 12-14 มี.ค. 2026  │
@@ -434,33 +434,33 @@ $headings-font-weight: 600;  // หัวข้อหนาชัด
 
 | Token | Hex | Usage |
 |-------|-----|-------|
-| `--ota-primary` | `#2563EB` | ปุ่มหลัก, links, active states, brand |
-| `--ota-primary-light` | `#DBEAFE` | Background highlights, selected states |
-| `--ota-primary-dark` | `#1D4ED8` | Hover states, emphasis |
+| `--rg-primary` | `#2563EB` | ปุ่มหลัก, links, active states, brand |
+| `--rg-primary-light` | `#DBEAFE` | Background highlights, selected states |
+| `--rg-primary-dark` | `#1D4ED8` | Hover states, emphasis |
 
 **Semantic Colors:**
 
 | Token | Hex | Usage |
 |-------|-----|-------|
-| `--ota-success` | `#16A34A` | Revenue เพิ่ม, approve, sync สำเร็จ |
-| `--ota-success-light` | `#DCFCE7` | Success background |
-| `--ota-danger` | `#DC2626` | Revenue ลด, sync ล้มเหลว, alert |
-| `--ota-danger-light` | `#FEE2E2` | Error background |
-| `--ota-warning` | `#F59E0B` | Pending, เฝ้าระวัง |
-| `--ota-warning-light` | `#FEF3C7` | Warning background |
-| `--ota-info` | `#0EA5E9` | AI recommendation, ข้อมูล |
-| `--ota-info-light` | `#E0F2FE` | Info background |
+| `--rg-success` | `#16A34A` | Revenue เพิ่ม, approve, sync สำเร็จ |
+| `--rg-success-light` | `#DCFCE7` | Success background |
+| `--rg-danger` | `#DC2626` | Revenue ลด, sync ล้มเหลว, alert |
+| `--rg-danger-light` | `#FEE2E2` | Error background |
+| `--rg-warning` | `#F59E0B` | Pending, เฝ้าระวัง |
+| `--rg-warning-light` | `#FEF3C7` | Warning background |
+| `--rg-info` | `#0EA5E9` | AI recommendation, ข้อมูล |
+| `--rg-info-light` | `#E0F2FE` | Info background |
 
 **Neutral Colors:**
 
 | Token | Hex | Usage |
 |-------|-----|-------|
-| `--ota-gray-900` | `#1E293B` | ข้อความหลัก (headings) |
-| `--ota-gray-700` | `#334155` | ข้อความรอง (body) |
-| `--ota-gray-500` | `#64748B` | ข้อความเสริม (labels, captions) |
-| `--ota-gray-300` | `#CBD5E1` | Borders, dividers |
-| `--ota-gray-100` | `#F1F5F9` | Background sections |
-| `--ota-white` | `#FFFFFF` | Card backgrounds, main bg |
+| `--rg-gray-900` | `#1E293B` | ข้อความหลัก (headings) |
+| `--rg-gray-700` | `#334155` | ข้อความรอง (body) |
+| `--rg-gray-500` | `#64748B` | ข้อความเสริม (labels, captions) |
+| `--rg-gray-300` | `#CBD5E1` | Borders, dividers |
+| `--rg-gray-100` | `#F1F5F9` | Background sections |
+| `--rg-white` | `#FFFFFF` | Card backgrounds, main bg |
 
 ### Typography System
 
@@ -495,7 +495,7 @@ $font-family-mono: 'IBM Plex Mono', monospace; // สำหรับราคา
 - Padding: 16px (mobile) / 24px (desktop)
 - Border radius: 8px
 - Shadow: `0 1px 3px rgba(0,0,0,0.1)`
-- Border: `1px solid var(--ota-gray-300)` (optional, for tables)
+- Border: `1px solid var(--rg-gray-300)` (optional, for tables)
 
 **Layout Grid:**
 - Max content width: 1200px

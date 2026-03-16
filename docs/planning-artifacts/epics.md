@@ -5,11 +5,11 @@ inputDocuments:
   - 'docs/planning-artifacts/architecture.md'
 ---
 
-# OTA - Epic Breakdown
+# RateGenie - Epic Breakdown
 
 ## Overview
 
-This document provides the complete epic and story breakdown for OTA, decomposing the requirements from the PRD and Architecture requirements into implementable stories.
+This document provides the complete epic and story breakdown for RateGenie, decomposing the requirements from the PRD and Architecture requirements into implementable stories.
 
 ## Requirements Inventory
 
