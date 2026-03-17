@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { prisma } from "@/lib/db/prisma";
 import { logger } from "@/lib/logger";
 import { bahtToSatang, satangToBaht } from "@/utils/currency";
@@ -7,13 +7,14 @@ import { buildPricingPrompt } from "./prompts";
 import type { PricingContext, AIRecommendation } from "./types";
 
 function isDemoMode() {
-  return !process.env.ANTHROPIC_API_KEY;
+  return !process.env.GEMINI_API_KEY;
 }
 
-function getAnthropicClient() {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+function getGeminiModel() {
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
-  return new Anthropic({ apiKey });
+  const genAI = new GoogleGenerativeAI(apiKey);
+  return genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 }
 
 async function gatherContext(
@@ -102,30 +103,25 @@ async function gatherContext(
   };
 }
 
-async function callClaudeAPI(
+async function callGeminiAPI(
   prompt: string
 ): Promise<AIRecommendation[]> {
-  const client = getAnthropicClient();
-  if (!client) {
-    logger.info("[DEMO] AI recommendation skipped — no ANTHROPIC_API_KEY");
+  const model = getGeminiModel();
+  if (!model) {
+    logger.info("[DEMO] AI recommendation skipped — no GEMINI_API_KEY");
     return [];
   }
 
   const response = await withRetry(
     async () => {
-      const msg = await client.messages.create({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 2048,
-        messages: [{ role: "user", content: prompt }],
-      });
-
-      const textBlock = msg.content.find((b) => b.type === "text");
-      if (!textBlock || textBlock.type !== "text") {
-        throw new Error("No text response from Claude");
+      const result = await model.generateContent(prompt);
+      const text = result.response.text();
+      if (!text) {
+        throw new Error("No text response from Gemini");
       }
-      return textBlock.text;
+      return text;
     },
-    { context: "claude_api", maxRetries: 3 }
+    { context: "gemini_api", maxRetries: 3 }
   );
 
   // Parse JSON response
@@ -195,14 +191,14 @@ export async function generateRecommendations(hotelId: string) {
 
   if (contexts.length === 0) return [];
 
-  // Build prompt and call Claude
+  // Build prompt and call Gemini
   const prompt = buildPricingPrompt(contexts);
 
   let aiResults: AIRecommendation[];
   try {
-    aiResults = await callClaudeAPI(prompt);
+    aiResults = await callGeminiAPI(prompt);
   } catch (error) {
-    logger.error("Claude API call failed", {
+    logger.error("Gemini API call failed", {
       hotelId,
       action: "ai_call_failed",
       error: String(error),
