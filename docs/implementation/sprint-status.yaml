@@ -66,11 +66,11 @@ development_status:
   epic-3-retrospective: optional
 
   # Epic 4: Notification System (LINE & Telegram)
-  epic-4: backlog
-  4-1-line-messaging-integration: backlog
-  4-2-telegram-bot-integration: backlog
-  4-3-ai-recommendation-notifications: backlog
-  4-4-system-alert-notifications: backlog
+  epic-4: done
+  4-1-line-messaging-integration: done
+  4-2-telegram-bot-integration: done
+  4-3-ai-recommendation-notifications: done
+  4-4-system-alert-notifications: done
   epic-4-retrospective: optional
 
   # Epic 5: Dashboard & Analytics

@@ -73,7 +73,8 @@ model User {
   hotelAccess      HotelUser[]
   sentInvitations  Invitation[]     @relation("InvitationSender")
   decisions        Recommendation[] @relation("RecommendationDecider")
-  auditLogs        AuditLog[]       @relation("AuditUser")
+  auditLogs          AuditLog[]         @relation("AuditUser")
+  verificationCodes  VerificationCode[]
 }
 
 model Hotel {
@@ -263,4 +264,16 @@ model AuditLog {
   createdAt  DateTime @default(now())
 
   @@index([hotelId, createdAt])
+}
+
+// === Models (Epic 4) ===
+
+model VerificationCode {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  channel   String
+  code      String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }
