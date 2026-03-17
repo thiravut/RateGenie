@@ -88,7 +88,7 @@ development_status:
   # Epic 6: Auto-Push Pricing to OTAs
   epic-6: in-progress
   6-1-channex-write-api-integration: review
-  6-2-approval-auto-push-flow: backlog
+  6-2-approval-auto-push-flow: review
   6-3-push-status-tracking-rollback: backlog
   6-4-rate-parity-enforcement: backlog
   epic-6-retrospective: optional

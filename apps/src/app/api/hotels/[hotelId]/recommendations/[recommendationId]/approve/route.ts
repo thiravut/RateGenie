@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { requireAuth, requireHotelAccess } from "@/lib/auth/rbac";
 import { logger } from "@/lib/logger";
+import { pushPrice } from "@/lib/channex/push";
 
 export async function POST(
   _request: Request,
@@ -80,6 +81,35 @@ export async function POST(
     },
   });
 
+  // Auto-push price to OTAs (MVP-1)
+  let pushResult = null;
+  try {
+    pushResult = await pushPrice({
+      hotelId,
+      roomTypeId: rec.roomTypeId,
+      targetDate: rec.targetDate.toISOString().split("T")[0],
+      newPrice: rec.recommendedPrice,
+      triggeredBy: "recommendation_approve",
+      recommendationId: rec.id,
+      userId: session!.user.id,
+    });
+
+    logger.info("Auto-push after approve", {
+      userId: session!.user.id,
+      hotelId,
+      action: "auto_push_after_approve",
+      success: pushResult.success,
+      otaCount: pushResult.otaResults.length,
+    });
+  } catch (err) {
+    logger.error("Auto-push failed after approve", {
+      userId: session!.user.id,
+      hotelId,
+      action: "auto_push_failed",
+      error: String(err),
+    });
+  }
+
   logger.info("Recommendation approved", {
     userId: session!.user.id,
     hotelId,
@@ -87,13 +117,23 @@ export async function POST(
   });
 
   return NextResponse.json({
-    message: "อนุมัติแล้ว",
+    message: pushResult?.success
+      ? "อนุมัติแล้ว — ราคา push ไป OTA สำเร็จ"
+      : pushResult
+        ? "อนุมัติแล้ว — push ราคาไม่สำเร็จบาง OTA"
+        : "อนุมัติแล้ว",
     recommendation: {
       id: updated.id,
       status: "approved",
       decidedAt: updated.decidedAt,
       decidedBy: updated.decidedBy,
     },
-    note: "กรุณาไปปรับราคาบน OTA ด้วยตัวเอง (MVP-0)",
+    push: pushResult
+      ? {
+          success: pushResult.success,
+          otaResults: pushResult.otaResults,
+          logIds: pushResult.logIds,
+        }
+      : null,
   });
 }

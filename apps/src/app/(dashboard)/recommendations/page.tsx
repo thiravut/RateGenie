@@ -156,7 +156,16 @@ export default function RecommendationsPage() {
         setError(data.error);
         return;
       }
-      setSuccess("อนุมัติคำแนะนำเรียบร้อยแล้ว");
+      const pushInfo = data.push;
+      if (pushInfo?.success) {
+        setSuccess(`อนุมัติแล้ว — ราคา push ไป ${pushInfo.otaResults.length} OTA สำเร็จ`);
+      } else if (pushInfo) {
+        const ok = pushInfo.otaResults.filter((r: { success: boolean }) => r.success).length;
+        const fail = pushInfo.otaResults.filter((r: { success: boolean }) => !r.success).length;
+        setSuccess(`อนุมัติแล้ว — push สำเร็จ ${ok} OTA, ล้มเหลว ${fail} OTA`);
+      } else {
+        setSuccess("อนุมัติคำแนะนำเรียบร้อยแล้ว");
+      }
       fetchRecs();
     } catch {
       setError("เกิดข้อผิดพลาด");

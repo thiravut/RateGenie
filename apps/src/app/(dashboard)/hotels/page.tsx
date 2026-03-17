@@ -55,6 +55,15 @@ interface SyncHistoryEntry {
   details: string | null;
 }
 
+interface PushHistoryEntry {
+  id: string;
+  otaName: string;
+  status: string;
+  newPrice: number;
+  previousPrice: number;
+  createdAt: string;
+}
+
 const OTA_COLORS: Record<string, string> = {
   agoda: "#f27d0c",
   "booking.com": "#003580",
@@ -109,6 +118,9 @@ export default function HotelsPage() {
   const [syncHistories, setSyncHistories] = useState<
     Record<string, SyncHistoryEntry[]>
   >({});
+  const [pushHistories, setPushHistories] = useState<
+    Record<string, PushHistoryEntry[]>
+  >({});
   const [channelLoading, setChannelLoading] = useState<string | null>(null);
   const [syncing, setSyncing] = useState<string | null>(null);
 
@@ -155,9 +167,10 @@ export default function HotelsPage() {
     if (roomTypes[hotelId]) return; // already loaded
     setChannelLoading(hotelId);
     try {
-      const [rtRes, histRes] = await Promise.all([
+      const [rtRes, histRes, pushRes] = await Promise.all([
         fetch(`/api/hotels/${hotelId}/room-types`),
         fetch(`/api/hotels/${hotelId}/sync-history`),
+        fetch(`/api/hotels/${hotelId}/push-history?limit=5`),
       ]);
 
       if (rtRes.ok) {
@@ -173,6 +186,14 @@ export default function HotelsPage() {
         setSyncHistories((prev) => ({
           ...prev,
           [hotelId]: (histData.data ?? histData ?? []).slice(0, 5),
+        }));
+      }
+
+      if (pushRes.ok) {
+        const pushData = await pushRes.json();
+        setPushHistories((prev) => ({
+          ...prev,
+          [hotelId]: (pushData.data ?? []).slice(0, 5),
         }));
       }
     } catch {
@@ -570,6 +591,48 @@ export default function HotelsPage() {
                                         </div>
                                         <span className="text-muted">
                                           {timeSince(entry.syncedAt)}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+
+                              {/* Push History */}
+                              {pushHistories[hotel.id] &&
+                                pushHistories[hotel.id].length > 0 && (
+                                  <div className="mb-3">
+                                    <div className="fw-semibold small mb-2">
+                                      Push History (ล่าสุด 5 รายการ)
+                                    </div>
+                                    {pushHistories[hotel.id].map((entry) => (
+                                      <div
+                                        key={entry.id}
+                                        className="d-flex align-items-center justify-content-between small mb-1"
+                                      >
+                                        <div className="d-flex align-items-center gap-2">
+                                          <Badge
+                                            bg={
+                                              entry.status === "success"
+                                                ? "success"
+                                                : entry.status === "rolled_back"
+                                                  ? "warning"
+                                                  : "danger"
+                                            }
+                                            style={{ fontSize: "0.65rem" }}
+                                          >
+                                            {entry.status === "success"
+                                              ? "สำเร็จ"
+                                              : entry.status === "rolled_back"
+                                                ? "Rollback"
+                                                : "ล้มเหลว"}
+                                          </Badge>
+                                          <span>{entry.otaName}</span>
+                                          <span className="text-muted">
+                                            ฿{entry.newPrice.toLocaleString()}
+                                          </span>
+                                        </div>
+                                        <span className="text-muted">
+                                          {timeSince(entry.createdAt)}
                                         </span>
                                       </div>
                                     ))}

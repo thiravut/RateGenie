@@ -204,3 +204,66 @@ export async function notifySyncRecovery(
     }
   }
 }
+
+export async function notifyPushResult(
+  hotelId: string,
+  pushSummary: {
+    roomTypeName: string;
+    targetDate: string;
+    newPrice: number;
+    otaResults: { otaName: string; success: boolean }[];
+  }
+) {
+  const hotel = await prisma.hotel.findFirst({
+    where: { id: hotelId, deletedAt: null },
+  });
+  if (!hotel) return;
+
+  const hotelUsers = await prisma.hotelUser.findMany({
+    where: { hotelId, role: { in: ["OWNER", "REVENUE_MANAGER"] } },
+    include: { user: true },
+  });
+
+  const successOTAs = pushSummary.otaResults.filter((r) => r.success);
+  const failedOTAs = pushSummary.otaResults.filter((r) => !r.success);
+
+  const statusEmoji = failedOTAs.length === 0 ? "✅" : "⚠️";
+  const message = [
+    `${statusEmoji} ราคา Push แล้ว`,
+    ``,
+    `โรงแรม: ${hotel.name}`,
+    `ห้อง: ${pushSummary.roomTypeName}`,
+    `วันที่: ${pushSummary.targetDate}`,
+    `ราคาใหม่: ฿${pushSummary.newPrice.toLocaleString()}`,
+    ``,
+    successOTAs.length > 0
+      ? `✅ สำเร็จ: ${successOTAs.map((r) => r.otaName).join(", ")}`
+      : "",
+    failedOTAs.length > 0
+      ? `❌ ล้มเหลว: ${failedOTAs.map((r) => r.otaName).join(", ")}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  for (const hu of hotelUsers) {
+    const user = hu.user;
+    try {
+      if (user.notificationChannel === "LINE" && user.lineUserId) {
+        await sendLineMessage(user.lineUserId, message);
+      } else if (
+        user.notificationChannel === "TELEGRAM" &&
+        user.telegramChatId
+      ) {
+        await sendTelegramMessage(user.telegramChatId, message);
+      }
+    } catch (error) {
+      logger.error("Failed to send push notification", {
+        userId: user.id,
+        hotelId,
+        action: "notification_push_failed",
+        error: String(error),
+      });
+    }
+  }
+}
