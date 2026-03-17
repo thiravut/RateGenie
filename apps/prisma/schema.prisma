@@ -99,6 +99,8 @@ model Hotel {
   recommendations Recommendation[]
   auditLogs       AuditLog[]
   priceUpdateLogs PriceUpdateLog[]
+  pricingRules    PricingRule[]
+  competitors     Competitor[]
 }
 
 model HotelUser {
@@ -304,4 +306,75 @@ model PriceUpdateLog {
 
   @@index([hotelId, createdAt])
   @@index([status])
+}
+
+// === Models (MVP-1: Epic 8 — Rules Engine) ===
+
+model PricingRule {
+  id          String   @id @default(uuid())
+  hotelId     String
+  hotel       Hotel    @relation(fields: [hotelId], references: [id])
+  name        String
+  description String?
+  enabled     Boolean  @default(true)
+  priority    Int      @default(0) // higher = higher priority
+  roomTypeIds String[] // empty = all room types
+  conditions  Json     // [{ metric, operator, value }]
+  action      Json     // { type, direction, amount, unit }
+  template    String?  // template name if created from template
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  executions  RuleExecution[]
+
+  @@index([hotelId, enabled])
+}
+
+model RuleExecution {
+  id           String      @id @default(uuid())
+  ruleId       String
+  rule         PricingRule @relation(fields: [ruleId], references: [id])
+  hotelId      String
+  roomTypeId   String
+  targetDate   DateTime    @db.Date
+  previousPrice Int        // satang
+  newPrice     Int         // satang
+  status       String      // EXECUTED, SKIPPED, FAILED
+  reason       String?     // why this execution happened or was skipped
+  createdAt    DateTime    @default(now())
+
+  @@index([ruleId, createdAt])
+  @@index([hotelId, createdAt])
+}
+
+// === Models (MVP-1: Epic 9 — Competitor Radar) ===
+
+model Competitor {
+  id        String   @id @default(uuid())
+  hotelId   String
+  hotel     Hotel    @relation(fields: [hotelId], references: [id])
+  name      String
+  location  String?
+  starRating Int?
+  source    String   @default("manual") // manual, provider
+  createdAt DateTime @default(now())
+
+  rates     CompetitorRate[]
+
+  @@index([hotelId])
+}
+
+model CompetitorRate {
+  id           String     @id @default(uuid())
+  competitorId String
+  competitor   Competitor @relation(fields: [competitorId], references: [id])
+  otaName      String
+  roomType     String     // approximate room type name
+  date         DateTime   @db.Date
+  price        Int        // satang
+  currency     String     @default("THB")
+  scrapedAt    DateTime   @default(now())
+
+  @@index([competitorId, date])
+  @@unique([competitorId, otaName, roomType, date])
 }
