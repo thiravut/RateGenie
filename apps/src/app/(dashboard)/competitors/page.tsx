@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, Row, Col, Badge, Table, Spinner, Nav } from "react-bootstrap";
+import { Card, Row, Col, Badge, Table, Spinner, Nav, Button, Alert } from "react-bootstrap";
 
 interface CompetitorRate {
   otaName: string;
@@ -31,10 +31,22 @@ function formatThaiDate(dateStr: string): string {
   });
 }
 
+interface DiscoveredCompetitor {
+  name: string;
+  location: string;
+  starRating: number;
+  roomTypes: string[];
+  description: string;
+}
+
 export default function CompetitorRadarPage() {
   const [data, setData] = useState<CompetitorData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedRoom, setSelectedRoom] = useState("Deluxe Room");
+  const [hotelId, setHotelId] = useState<string | null>(null);
+  const [discovering, setDiscovering] = useState(false);
+  const [discovered, setDiscovered] = useState<DiscoveredCompetitor[] | null>(null);
+  const [discoverMsg, setDiscoverMsg] = useState("");
 
   useEffect(() => {
     fetch("/api/hotels")
@@ -44,12 +56,38 @@ export default function CompetitorRadarPage() {
           setLoading(false);
           return;
         }
+        setHotelId(d.data[0].id);
         const res = await fetch(`/api/hotels/${d.data[0].id}/competitors`);
         setData(await res.json());
       })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  async function handleDiscover() {
+    if (!hotelId) return;
+    setDiscovering(true);
+    setDiscoverMsg("");
+    setDiscovered(null);
+    try {
+      const res = await fetch(`/api/hotels/${hotelId}/competitors/discover`, {
+        method: "POST",
+      });
+      const result = await res.json();
+      setDiscoverMsg(result.message);
+      setDiscovered(result.discovered ?? []);
+
+      // Refresh competitor data
+      if (result.saved > 0) {
+        const dataRes = await fetch(`/api/hotels/${hotelId}/competitors`);
+        setData(await dataRes.json());
+      }
+    } catch {
+      setDiscoverMsg("เกิดข้อผิดพลาดในการค้นหา");
+    } finally {
+      setDiscovering(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -63,11 +101,67 @@ export default function CompetitorRadarPage() {
     return (
       <>
         <h4 className="mb-4">เรดาร์คู่แข่ง</h4>
-        <Card className="border-0 shadow-sm text-center py-5">
+
+        {discoverMsg && (
+          <Alert variant={discovered && discovered.length > 0 ? "success" : "info"} dismissible onClose={() => setDiscoverMsg("")}>
+            {discoverMsg}
+          </Alert>
+        )}
+
+        <Card className="border-0 shadow-sm text-center py-5 mb-4">
           <Card.Body>
-            <p className="text-muted">ยังไม่มีข้อมูลราคาคู่แข่ง</p>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🔍</div>
+            <p className="text-muted mb-3">ยังไม่มีข้อมูลคู่แข่ง — ให้ AI ค้นหาโรงแรมคู่แข่งในย่านเดียวกัน</p>
+            <Button
+              variant="primary"
+              onClick={handleDiscover}
+              disabled={discovering}
+            >
+              {discovering ? (
+                <>
+                  <Spinner animation="border" size="sm" className="me-2" />
+                  กำลังค้นหาด้วย AI...
+                </>
+              ) : (
+                "ค้นหาคู่แข่งด้วย AI"
+              )}
+            </Button>
           </Card.Body>
         </Card>
+
+        {/* Discovered results */}
+        {discovered && discovered.length > 0 && (
+          <Card className="border-0 shadow-sm">
+            <Card.Body>
+              <h6 className="fw-bold mb-3">โรงแรมคู่แข่งที่พบ ({discovered.length} แห่ง)</h6>
+              <Row className="g-3">
+                {discovered.map((comp, i) => (
+                  <Col key={i} md={6} lg={4}>
+                    <Card className="h-100" style={{ borderLeft: "4px solid var(--rg-primary)" }}>
+                      <Card.Body>
+                        <div className="d-flex justify-content-between align-items-start mb-1">
+                          <span className="fw-bold">{comp.name}</span>
+                          <Badge bg="light" text="dark">{"⭐".repeat(comp.starRating)}</Badge>
+                        </div>
+                        <small className="text-muted d-block mb-2">{comp.location}</small>
+                        <small className="text-muted">{comp.description}</small>
+                        {comp.roomTypes && (
+                          <div className="mt-2 d-flex flex-wrap gap-1">
+                            {comp.roomTypes.map((rt) => (
+                              <Badge key={rt} bg="light" text="dark" style={{ fontSize: "0.65rem" }}>
+                                {rt}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                ))}
+              </Row>
+            </Card.Body>
+          </Card>
+        )}
       </>
     );
   }
@@ -125,7 +219,28 @@ export default function CompetitorRadarPage() {
             เปรียบเทียบราคากับ {data.competitors.length} โรงแรมคู่แข่ง
           </small>
         </div>
+        <Button
+          variant="outline-primary"
+          size="sm"
+          onClick={handleDiscover}
+          disabled={discovering}
+        >
+          {discovering ? (
+            <>
+              <Spinner animation="border" size="sm" className="me-1" />
+              กำลังค้นหา...
+            </>
+          ) : (
+            "ค้นหาคู่แข่งเพิ่ม"
+          )}
+        </Button>
       </div>
+
+      {discoverMsg && (
+        <Alert variant="success" dismissible onClose={() => setDiscoverMsg("")} className="mb-3">
+          {discoverMsg}
+        </Alert>
+      )}
 
       {/* Summary cards */}
       <Row className="g-3 mb-4">
