@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { Container, Nav, Navbar, Button } from "react-bootstrap";
+import { Container, Nav, Navbar, Button, NavDropdown } from "react-bootstrap";
 import Link from "next/link";
 
 const navItems = [
@@ -46,13 +46,17 @@ export default function DashboardLayout({
                 </Nav.Link>
               ))}
             </Nav>
-            <Button
-              variant="outline-secondary"
-              size="sm"
-              onClick={() => signOut({ callbackUrl: "/login" })}
-            >
-              ออกจากระบบ
-            </Button>
+            <NavDropdown title="บัญชี" align="end">
+              <NavDropdown.Item as={Link} href="/settings">
+                ตั้งค่า
+              </NavDropdown.Item>
+              <NavDropdown.Divider />
+              <NavDropdown.Item
+                onClick={() => signOut({ callbackUrl: "/login" })}
+              >
+                ออกจากระบบ
+              </NavDropdown.Item>
+            </NavDropdown>
           </Navbar.Collapse>
         </Container>
       </Navbar>

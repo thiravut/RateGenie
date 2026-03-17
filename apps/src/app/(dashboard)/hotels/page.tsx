@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import {
   Card,
   Button,
@@ -183,15 +184,22 @@ export default function HotelsPage() {
                       ? `${hotel.memberCount} สมาชิก`
                       : ""}
                   </p>
-                  {hotel.role === "OWNER" && (
-                    <Button
-                      variant="outline-primary"
-                      size="sm"
-                      onClick={() => setShowInvite(hotel.id)}
-                    >
-                      เชิญสมาชิก
-                    </Button>
-                  )}
+                  <div className="d-flex gap-2">
+                    <Link href={`/hotels/${hotel.id}/settings`}>
+                      <Button variant="primary" size="sm">
+                        จัดการ
+                      </Button>
+                    </Link>
+                    {hotel.role === "OWNER" && (
+                      <Button
+                        variant="outline-primary"
+                        size="sm"
+                        onClick={() => setShowInvite(hotel.id)}
+                      >
+                        เชิญสมาชิก
+                      </Button>
+                    )}
+                  </div>
                 </Card.Body>
               </Card>
             </Col>
