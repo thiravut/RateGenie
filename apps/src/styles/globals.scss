@@ -17,6 +17,14 @@
   --rg-gray-300: #CBD5E1;
   --rg-gray-100: #F1F5F9;
   --rg-white: #FFFFFF;
+  --rg-light: #F8FAFC;
+
+  // OTA Brand Colors
+  --ota-agoda: #FF5A00;
+  --ota-agoda-light: #FFF3ED;
+  --ota-booking: #003580;
+  --ota-booking-light: #E8EFF8;
+  --ota-expedia: #FBCC33;
 }
 
 body {
@@ -28,4 +36,257 @@ body {
 // Monospace for prices
 .font-mono {
   font-family: 'IBM Plex Mono', monospace;
+}
+
+// Price formatting
+.price {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+}
+
+.price-up {
+  color: var(--rg-success);
+  &::before { content: '▲ '; font-size: 0.75em; }
+}
+
+.price-down {
+  color: var(--rg-danger);
+  &::before { content: '▼ '; font-size: 0.75em; }
+}
+
+// KPI Card
+.kpi-card {
+  border: none !important;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  transition: transform 0.15s, box-shadow 0.15s;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  .kpi-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .kpi-label {
+    font-size: 0.8rem;
+    color: var(--rg-gray-500);
+    margin-bottom: 4px;
+  }
+
+  .kpi-trend {
+    font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+}
+
+// Accent border cards
+.card-accent-left {
+  border-left: 4px solid transparent !important;
+  border-top: none !important;
+  border-right: none !important;
+  border-bottom: none !important;
+
+  &.accent-success { border-left-color: var(--rg-success) !important; }
+  &.accent-danger { border-left-color: var(--rg-danger) !important; }
+  &.accent-warning { border-left-color: var(--rg-warning) !important; }
+  &.accent-info { border-left-color: var(--rg-info) !important; }
+  &.accent-primary { border-left-color: var(--rg-primary) !important; }
+}
+
+// OTA badges
+.ota-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  &.ota-agoda {
+    background: var(--ota-agoda-light);
+    color: var(--ota-agoda);
+  }
+
+  &.ota-booking {
+    background: var(--ota-booking-light);
+    color: var(--ota-booking);
+  }
+}
+
+// Status dot
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+
+  &.dot-success { background: var(--rg-success); }
+  &.dot-warning { background: var(--rg-warning); }
+  &.dot-danger { background: var(--rg-danger); }
+  &.dot-secondary { background: var(--rg-gray-300); }
+
+  &.dot-pulse {
+    animation: pulse 2s ease-in-out infinite;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+// Rate parity table
+.rate-parity-row {
+  &.parity-mismatch {
+    background-color: #FFF8E1 !important;
+  }
+
+  &.weekend-row {
+    background-color: var(--rg-gray-100) !important;
+  }
+}
+
+// Recommendation card
+.rec-card {
+  border: none !important;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  transition: transform 0.15s;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+
+  .rec-price-change {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'IBM Plex Mono', monospace;
+
+    .rec-arrow {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .arrow-up { color: var(--rg-success); }
+    .arrow-down { color: var(--rg-danger); }
+  }
+
+  .rec-reason {
+    font-size: 0.875rem;
+    color: var(--rg-gray-700);
+    font-style: italic;
+    padding: 8px 12px;
+    background: var(--rg-gray-100);
+    border-radius: 8px;
+    margin-top: 8px;
+  }
+}
+
+// CSS bar charts (no library needed)
+.bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 120px;
+
+  .bar {
+    flex: 1;
+    border-radius: 4px 4px 0 0;
+    min-height: 4px;
+    transition: height 0.3s ease;
+    position: relative;
+
+    .bar-label {
+      position: absolute;
+      bottom: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.7rem;
+      white-space: nowrap;
+      color: var(--rg-gray-500);
+    }
+
+    .bar-value {
+      position: absolute;
+      top: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.7rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+  }
+}
+
+// Progress ring (for approval rate)
+.progress-ring {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  .progress-ring-text {
+    position: absolute;
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+}
+
+// Section titles
+.section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--rg-gray-700);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--rg-gray-300);
+  }
+}
+
+// Smooth scrolling
+html {
+  scroll-behavior: smooth;
+}
+
+// Better card defaults
+.card {
+  border-radius: 12px !important;
+}
+
+// Tab navigation styling
+.nav-tabs-custom {
+  .nav-link {
+    border: none;
+    color: var(--rg-gray-500);
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 8px;
+
+    &.active {
+      color: var(--rg-primary);
+      background: var(--rg-primary-light);
+      font-weight: 600;
+    }
+
+    &:hover:not(.active) {
+      color: var(--rg-gray-700);
+      background: var(--rg-gray-100);
+    }
+  }
 }

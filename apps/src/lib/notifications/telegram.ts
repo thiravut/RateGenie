@@ -1,16 +1,24 @@
 import { logger } from "@/lib/logger";
 import { withRetry } from "@/utils/retry";
 
+function isDemoMode() {
+  return !process.env.TELEGRAM_BOT_TOKEN;
+}
+
 function getApiUrl(method: string) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
-  if (!token) throw new Error("TELEGRAM_BOT_TOKEN is not configured");
+  if (!token) return null;
   return `https://api.telegram.org/bot${token}/${method}`;
 }
 
 export async function sendTelegramMessage(chatId: string, text: string) {
+  if (isDemoMode()) {
+    logger.info("[DEMO] Telegram message skipped", { chatId, text: text.substring(0, 50) });
+    return;
+  }
   return withRetry(
     async () => {
-      const res = await fetch(getApiUrl("sendMessage"), {
+      const res = await fetch(getApiUrl("sendMessage")!, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -39,9 +47,13 @@ export async function sendTelegramWithButtons(
   text: string,
   buttons: { text: string; url: string }[]
 ) {
+  if (isDemoMode()) {
+    logger.info("[DEMO] Telegram buttons message skipped", { chatId, text: text.substring(0, 50) });
+    return;
+  }
   return withRetry(
     async () => {
-      const res = await fetch(getApiUrl("sendMessage"), {
+      const res = await fetch(getApiUrl("sendMessage")!, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

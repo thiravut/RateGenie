@@ -140,34 +140,44 @@ async function main() {
   ];
   let bookingCount = 0;
 
-  for (let i = 0; i < 45; i++) {
-    const dayOffset = Math.floor(Math.random() * 30) - 15;
+  // Generate ~50-60 bookings per day for realistic occupancy (60-75%)
+  for (let dayOffset = -30; dayOffset <= 14; dayOffset++) {
     const checkIn = new Date();
     checkIn.setDate(checkIn.getDate() + dayOffset);
     checkIn.setHours(0, 0, 0, 0);
-    const nights = Math.floor(Math.random() * 3) + 1;
-    const checkOut = new Date(checkIn);
-    checkOut.setDate(checkOut.getDate() + nights);
+    const isWeekend = checkIn.getDay() === 0 || checkIn.getDay() === 6;
 
-    const ota = Math.random() > 0.5 ? "agoda" : "booking";
-    const rt = roomTypes[Math.floor(Math.random() * roomTypes.length)];
-    const price = (basePrices[rt.id][ota] / 100) * nights;
+    // More bookings on weekends
+    const dailyBookings = isWeekend
+      ? Math.floor(Math.random() * 10) + 55 // 55-65 rooms
+      : Math.floor(Math.random() * 15) + 40; // 40-55 rooms
 
-    await prisma.booking.create({
-      data: {
-        hotelId: hotel.id,
-        channexBookingId: `mock-bk-${Date.now()}-${i}`,
-        otaName: ota,
-        roomTypeId: rt.id,
-        guestName: guestNames[Math.floor(Math.random() * guestNames.length)],
-        checkIn,
-        checkOut,
-        status: Math.random() > 0.1 ? "CONFIRMED" : "CANCELLED",
-        totalPrice: Math.round(price),
-        currency: "THB",
-      },
-    });
-    bookingCount++;
+    for (let b = 0; b < dailyBookings; b++) {
+      const nights = Math.floor(Math.random() * 3) + 1;
+      const checkOut = new Date(checkIn);
+      checkOut.setDate(checkOut.getDate() + nights);
+
+      const ota = Math.random() > 0.45 ? "agoda" : "booking";
+      const rt = roomTypes[Math.floor(Math.random() * roomTypes.length)];
+      // Keep price in satang (matching basePrices unit)
+      const totalPrice = basePrices[rt.id][ota] * nights;
+
+      await prisma.booking.create({
+        data: {
+          hotelId: hotel.id,
+          channexBookingId: `mock-bk-${dayOffset}-${b}-${Date.now()}`,
+          otaName: ota,
+          roomTypeId: rt.id,
+          guestName: guestNames[Math.floor(Math.random() * guestNames.length)],
+          checkIn,
+          checkOut,
+          status: Math.random() > 0.05 ? "CONFIRMED" : "CANCELLED",
+          totalPrice,
+          currency: "THB",
+        },
+      });
+      bookingCount++;
+    }
   }
   console.log(`Bookings: ${bookingCount}`);
 

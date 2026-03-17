@@ -5,13 +5,14 @@ import {
   Card,
   Button,
   Badge,
-  Table,
   Form,
   Modal,
   Alert,
   Spinner,
   Row,
   Col,
+  Nav,
+  ProgressBar,
 } from "react-bootstrap";
 
 interface Recommendation {
@@ -46,12 +47,53 @@ const REJECTION_REASONS = [
   { value: "OTHER", label: "อื่นๆ" },
 ];
 
-const STATUS_BADGES: Record<string, string> = {
-  pending: "warning",
-  approved: "success",
-  rejected: "danger",
-  expired: "secondary",
+const REJECTION_LABELS: Record<string, string> = {
+  LOCAL_EVENT: "มี local event",
+  PRICE_TOO_HIGH: "ราคาสูงเกินไป",
+  PRICE_TOO_LOW: "ราคาต่ำเกินไป",
+  MARKET_KNOWLEDGE: "มีข้อมูลตลาดที่ AI ไม่รู้",
+  OTHER: "อื่นๆ",
 };
+
+const STATUS_TABS = [
+  { key: "pending", label: "รอดำเนินการ" },
+  { key: "approved", label: "อนุมัติแล้ว" },
+  { key: "rejected", label: "ปฏิเสธแล้ว" },
+  { key: "expired", label: "หมดอายุ" },
+  { key: "all", label: "ทั้งหมด" },
+];
+
+function formatThaiDate(dateStr: string): string {
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("th-TH", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      year: "2-digit",
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
+function formatThaiDateTime(dateStr: string): string {
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("th-TH", {
+      day: "numeric",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
+function formatPrice(price: number): string {
+  return `฿${price.toLocaleString("th-TH")}`;
+}
 
 export default function RecommendationsPage() {
   const [recs, setRecs] = useState<Recommendation[]>([]);
@@ -67,7 +109,7 @@ export default function RecommendationsPage() {
   const [rejectNote, setRejectNote] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
 
-  // We need a hotelId — for now use the first hotel
+  // Hotel
   const [hotelId, setHotelId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -114,7 +156,7 @@ export default function RecommendationsPage() {
         setError(data.error);
         return;
       }
-      setSuccess("อนุมัติแล้ว");
+      setSuccess("อนุมัติคำแนะนำเรียบร้อยแล้ว");
       fetchRecs();
     } catch {
       setError("เกิดข้อผิดพลาด");
@@ -125,6 +167,10 @@ export default function RecommendationsPage() {
 
   async function handleReject() {
     if (!rejectId) return;
+    if (rejectReason === "OTHER" && !rejectNote.trim()) {
+      setError("กรุณาระบุหมายเหตุสำหรับเหตุผล 'อื่นๆ'");
+      return;
+    }
     setActionLoading(true);
     setError("");
     try {
@@ -144,8 +190,9 @@ export default function RecommendationsPage() {
         setError(data.error);
         return;
       }
-      setSuccess("ปฏิเสธแล้ว");
+      setSuccess("ปฏิเสธคำแนะนำเรียบร้อยแล้ว");
       setRejectId(null);
+      setRejectReason("PRICE_TOO_HIGH");
       setRejectNote("");
       fetchRecs();
     } catch {
@@ -185,220 +232,419 @@ export default function RecommendationsPage() {
     }
   }
 
+  // ── No hotel state ──
   if (!hotelId && !loading) {
     return (
-      <Card className="border-0 shadow-sm text-center py-5">
-        <Card.Body>
-          <p className="text-muted">กรุณาเพิ่มโรงแรมก่อนใช้งานคำแนะนำ AI</p>
-        </Card.Body>
-      </Card>
+      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: 400 }}>
+        <Card className="border-0 shadow-sm text-center p-5" style={{ maxWidth: 420 }}>
+          <Card.Body>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>🏨</div>
+            <h5 className="mb-3">ยังไม่มีโรงแรม</h5>
+            <p className="text-muted mb-0">
+              กรุณาเพิ่มโรงแรมก่อนใช้งานคำแนะนำ AI
+            </p>
+          </Card.Body>
+        </Card>
+      </div>
     );
   }
 
+  const pendingCount = recs.filter((r) => r.status === "pending").length;
+
   return (
     <>
-      <h4 className="mb-4">คำแนะนำ AI</h4>
+      {/* ── Page Header ── */}
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h4 className="mb-1">คำแนะนำราคาจาก AI</h4>
+          <p className="text-muted mb-0 small">
+            RateGenie วิเคราะห์ข้อมูลตลาดและแนะนำราคาที่เหมาะสมสำหรับโรงแรมของคุณ
+          </p>
+        </div>
+      </div>
 
+      {/* ── Alerts ── */}
       {error && (
-        <Alert variant="danger" dismissible onClose={() => setError("")}>
+        <Alert variant="danger" dismissible onClose={() => setError("")} className="mb-3">
           {error}
         </Alert>
       )}
       {success && (
-        <Alert variant="success" dismissible onClose={() => setSuccess("")}>
+        <Alert variant="success" dismissible onClose={() => setSuccess("")} className="mb-3">
           {success}
         </Alert>
       )}
 
+      {/* ── Summary Bar ── */}
       {summary && (
         <Row className="g-3 mb-4">
-          <Col xs={6} md={3}>
-            <Card className="border-0 shadow-sm text-center">
-              <Card.Body>
-                <div className="text-muted small">รอดำเนินการ</div>
-                <h4 className="text-warning mb-0">{summary.pending}</h4>
+          <Col xs={6} lg={3}>
+            <Card className="border-0 shadow-sm h-100">
+              <Card.Body className="text-center py-3">
+                <div className="text-muted small mb-1">รอดำเนินการ</div>
+                <h2 className="mb-0 fw-bold" style={{ color: "#ed6c02" }}>
+                  {summary.pending}
+                </h2>
+                <small className="text-muted">รายการ</small>
               </Card.Body>
             </Card>
           </Col>
-          <Col xs={6} md={3}>
-            <Card className="border-0 shadow-sm text-center">
-              <Card.Body>
-                <div className="text-muted small">อนุมัติวันนี้</div>
-                <h4 className="text-success mb-0">{summary.approvedToday}</h4>
+          <Col xs={6} lg={3}>
+            <Card className="border-0 shadow-sm h-100">
+              <Card.Body className="text-center py-3">
+                <div className="text-muted small mb-1">อนุมัติวันนี้</div>
+                <h2 className="mb-0 fw-bold text-success">{summary.approvedToday}</h2>
+                <small className="text-muted">รายการ</small>
               </Card.Body>
             </Card>
           </Col>
-          <Col xs={6} md={3}>
-            <Card className="border-0 shadow-sm text-center">
-              <Card.Body>
-                <div className="text-muted small">ปฏิเสธวันนี้</div>
-                <h4 className="text-danger mb-0">{summary.rejectedToday}</h4>
+          <Col xs={6} lg={3}>
+            <Card className="border-0 shadow-sm h-100">
+              <Card.Body className="text-center py-3">
+                <div className="text-muted small mb-1">ปฏิเสธวันนี้</div>
+                <h2 className="mb-0 fw-bold text-danger">{summary.rejectedToday}</h2>
+                <small className="text-muted">รายการ</small>
               </Card.Body>
             </Card>
           </Col>
-          <Col xs={6} md={3}>
-            <Card className="border-0 shadow-sm text-center">
-              <Card.Body>
-                <div className="text-muted small">อัตราอนุมัติ</div>
-                <h4 className="mb-0">{summary.approvalRate}%</h4>
+          <Col xs={6} lg={3}>
+            <Card className="border-0 shadow-sm h-100">
+              <Card.Body className="text-center py-3">
+                <div className="text-muted small mb-1">อัตราอนุมัติ</div>
+                <h2 className="mb-0 fw-bold" style={{ color: "#0d6efd" }}>
+                  {summary.approvalRate}%
+                </h2>
+                <ProgressBar
+                  now={summary.approvalRate}
+                  variant={
+                    summary.approvalRate >= 80
+                      ? "success"
+                      : summary.approvalRate >= 50
+                        ? "primary"
+                        : "warning"
+                  }
+                  style={{ height: 6, marginTop: 8 }}
+                />
               </Card.Body>
             </Card>
           </Col>
         </Row>
       )}
 
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <Form.Select
-          style={{ width: 200 }}
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-        >
-          <option value="pending">รอดำเนินการ</option>
-          <option value="approved">อนุมัติแล้ว</option>
-          <option value="rejected">ปฏิเสธแล้ว</option>
-          <option value="expired">หมดอายุ</option>
-          <option value="all">ทั้งหมด</option>
-        </Form.Select>
+      {/* ── Filter Tabs + Batch Approve ── */}
+      <Card className="border-0 shadow-sm mb-4">
+        <Card.Body className="py-2 px-3">
+          <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <Nav variant="pills" activeKey={statusFilter} onSelect={(k) => k && setStatusFilter(k)}>
+              {STATUS_TABS.map((tab) => (
+                <Nav.Item key={tab.key}>
+                  <Nav.Link
+                    eventKey={tab.key}
+                    className="py-1 px-3"
+                    style={{ fontSize: 14 }}
+                  >
+                    {tab.label}
+                    {tab.key === "pending" && summary && summary.pending > 0 && (
+                      <Badge bg="warning" text="dark" pill className="ms-2" style={{ fontSize: 11 }}>
+                        {summary.pending}
+                      </Badge>
+                    )}
+                  </Nav.Link>
+                </Nav.Item>
+              ))}
+            </Nav>
 
-        {statusFilter === "pending" && recs.length > 0 && (
-          <Button
-            variant="success"
-            size="sm"
-            onClick={handleBatchApprove}
-            disabled={actionLoading}
-          >
-            อนุมัติทั้งหมด ({recs.filter((r) => r.status === "pending").length})
-          </Button>
-        )}
-      </div>
+            {statusFilter === "pending" && pendingCount > 0 && (
+              <Button
+                variant="success"
+                size="sm"
+                onClick={handleBatchApprove}
+                disabled={actionLoading}
+                className="fw-semibold"
+              >
+                {actionLoading ? (
+                  <>
+                    <Spinner animation="border" size="sm" className="me-1" />
+                    กำลังอนุมัติ...
+                  </>
+                ) : (
+                  <>อนุมัติทั้งหมด ({pendingCount})</>
+                )}
+              </Button>
+            )}
+          </div>
+        </Card.Body>
+      </Card>
 
+      {/* ── Content ── */}
       {loading ? (
         <div className="text-center py-5">
-          <Spinner animation="border" variant="primary" />
+          <Spinner animation="border" variant="primary" className="mb-3" />
+          <p className="text-muted">กำลังโหลดคำแนะนำ...</p>
         </div>
       ) : recs.length === 0 ? (
-        <Card className="border-0 shadow-sm text-center py-5">
-          <Card.Body>
-            <p className="text-muted">ไม่มีคำแนะนำในสถานะนี้</p>
+        /* ── Empty State ── */
+        <Card className="border-0 shadow-sm">
+          <Card.Body className="text-center py-5">
+            <div style={{ fontSize: 56, marginBottom: 16, opacity: 0.6 }}>🤖</div>
+            <h5 className="mb-2 text-muted">ไม่มีคำแนะนำในสถานะนี้</h5>
+            <p className="text-muted mb-0" style={{ maxWidth: 360, margin: "0 auto" }}>
+              {statusFilter === "pending"
+                ? "AI กำลังวิเคราะห์ข้อมูลตลาดและอัตราเข้าพัก... คำแนะนำใหม่จะปรากฏที่นี่เร็วๆ นี้"
+                : "ไม่พบรายการที่ตรงกับตัวกรองที่เลือก"}
+            </p>
           </Card.Body>
         </Card>
       ) : (
-        <Card className="border-0 shadow-sm">
-          <Table responsive hover className="mb-0">
-            <thead>
-              <tr>
-                <th>ห้อง</th>
-                <th>วันที่</th>
-                <th className="text-end">ราคาปัจจุบัน</th>
-                <th className="text-end">ราคาแนะนำ</th>
-                <th className="text-end">%</th>
-                <th>เหตุผล</th>
-                <th>สถานะ</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {recs.map((rec) => (
-                <tr key={rec.id}>
-                  <td>{rec.roomType.name}</td>
-                  <td>{rec.targetDate}</td>
-                  <td className="text-end font-mono">
-                    {rec.currentPrice.toLocaleString()}
-                  </td>
-                  <td className="text-end font-mono">
-                    {rec.recommendedPrice.toLocaleString()}
-                  </td>
-                  <td
-                    className={`text-end ${rec.changeDirection === "up" ? "text-success" : rec.changeDirection === "down" ? "text-danger" : ""}`}
-                  >
-                    {rec.changeDirection === "up" ? "+" : ""}
-                    {rec.changePercent.toFixed(1)}%
-                  </td>
-                  <td style={{ maxWidth: 250 }}>
-                    <small>{rec.reason}</small>
-                  </td>
-                  <td>
-                    <Badge bg={STATUS_BADGES[rec.status] ?? "secondary"}>
-                      {rec.status === "pending"
-                        ? "รอ"
-                        : rec.status === "approved"
-                          ? "อนุมัติ"
-                          : rec.status === "rejected"
-                            ? "ปฏิเสธ"
-                            : "หมดอายุ"}
-                    </Badge>
-                  </td>
-                  <td>
-                    {rec.status === "pending" && (
-                      <div className="d-flex gap-1">
-                        <Button
-                          variant="success"
-                          size="sm"
-                          onClick={() => handleApprove(rec.id)}
-                          disabled={actionLoading}
+        /* ── Recommendation Cards ── */
+        <div className="d-flex flex-column gap-3">
+          {recs.map((rec) => {
+            const isUp = rec.changeDirection === "up";
+            const isDown = rec.changeDirection === "down";
+            const isPending = rec.status === "pending";
+            const isApproved = rec.status === "approved";
+            const isRejected = rec.status === "rejected";
+
+            const borderColor = isApproved
+              ? "#198754"
+              : isRejected
+                ? "#dc3545"
+                : "transparent";
+
+            return (
+              <Card
+                key={rec.id}
+                className="border-0 shadow-sm"
+                style={{
+                  borderLeft: `4px solid ${borderColor}`,
+                  transition: "box-shadow 0.15s ease",
+                }}
+              >
+                <Card.Body className="p-3">
+                  <Row className="align-items-center g-3">
+                    {/* ── Left: Room Info ── */}
+                    <Col xs={12} md={3}>
+                      <h6 className="mb-1 fw-semibold">{rec.roomType.name}</h6>
+                      <small className="text-muted">
+                        {formatThaiDate(rec.targetDate)}
+                      </small>
+                      {isApproved && (
+                        <div className="mt-2">
+                          <Badge bg="success" className="me-1">อนุมัติแล้ว</Badge>
+                          {rec.decidedBy && (
+                            <small className="text-muted d-block mt-1">
+                              โดย {rec.decidedBy.name}
+                              {rec.decidedAt && ` - ${formatThaiDateTime(rec.decidedAt)}`}
+                            </small>
+                          )}
+                        </div>
+                      )}
+                      {isRejected && (
+                        <div className="mt-2">
+                          <Badge bg="danger" className="me-1">ปฏิเสธแล้ว</Badge>
+                          {rec.rejectionReason && (
+                            <Badge bg="light" text="dark" className="ms-1" style={{ fontSize: 11 }}>
+                              {REJECTION_LABELS[rec.rejectionReason] ?? rec.rejectionReason}
+                            </Badge>
+                          )}
+                          {rec.rejectionNote && (
+                            <small className="text-muted d-block mt-1 fst-italic">
+                              &quot;{rec.rejectionNote}&quot;
+                            </small>
+                          )}
+                          {rec.decidedBy && (
+                            <small className="text-muted d-block mt-1">
+                              โดย {rec.decidedBy.name}
+                              {rec.decidedAt && ` - ${formatThaiDateTime(rec.decidedAt)}`}
+                            </small>
+                          )}
+                        </div>
+                      )}
+                      {rec.status === "expired" && (
+                        <div className="mt-2">
+                          <Badge bg="secondary">หมดอายุ</Badge>
+                        </div>
+                      )}
+                    </Col>
+
+                    {/* ── Center: Price Visualization ── */}
+                    <Col xs={12} md={isPending ? 5 : 9}>
+                      <div className="d-flex align-items-center gap-3 flex-wrap">
+                        {/* Current Price */}
+                        <div className="text-center">
+                          <small className="text-muted d-block" style={{ fontSize: 11 }}>
+                            ราคาปัจจุบัน
+                          </small>
+                          <span
+                            className="fw-semibold"
+                            style={{ fontSize: 18, color: "#6c757d" }}
+                          >
+                            {formatPrice(rec.currentPrice)}
+                          </span>
+                        </div>
+
+                        {/* Arrow */}
+                        <div style={{ fontSize: 24 }}>
+                          {isUp ? (
+                            <span style={{ color: "#198754" }}>&#8599;</span>
+                          ) : isDown ? (
+                            <span style={{ color: "#dc3545" }}>&#8600;</span>
+                          ) : (
+                            <span style={{ color: "#6c757d" }}>&#8594;</span>
+                          )}
+                        </div>
+
+                        {/* Recommended Price */}
+                        <div className="text-center">
+                          <small className="text-muted d-block" style={{ fontSize: 11 }}>
+                            ราคาแนะนำ
+                          </small>
+                          <span
+                            className="fw-bold"
+                            style={{
+                              fontSize: 20,
+                              color: isUp ? "#198754" : isDown ? "#dc3545" : "#212529",
+                            }}
+                          >
+                            {formatPrice(rec.recommendedPrice)}
+                          </span>
+                        </div>
+
+                        {/* Change Badge */}
+                        <Badge
+                          bg={isUp ? "success" : isDown ? "danger" : "secondary"}
+                          style={{ fontSize: 13, padding: "6px 10px" }}
                         >
-                          อนุมัติ
-                        </Button>
-                        <Button
-                          variant="outline-danger"
-                          size="sm"
-                          onClick={() => setRejectId(rec.id)}
-                          disabled={actionLoading}
-                        >
-                          ปฏิเสธ
-                        </Button>
+                          {isUp ? "+" : ""}
+                          {rec.changePercent.toFixed(1)}%
+                          {isUp ? " ↑" : isDown ? " ↓" : ""}
+                        </Badge>
                       </div>
+
+                      {/* AI Reasoning */}
+                      <div
+                        className="mt-2 fst-italic"
+                        style={{
+                          color: "#6c757d",
+                          fontSize: 13,
+                          lineHeight: 1.5,
+                          borderTop: "1px solid #f0f0f0",
+                          paddingTop: 8,
+                        }}
+                      >
+                        💡 {rec.reason}
+                      </div>
+                    </Col>
+
+                    {/* ── Right: Actions (pending only) ── */}
+                    {isPending && (
+                      <Col xs={12} md={4} className="text-md-end">
+                        <div className="d-flex gap-2 justify-content-md-end">
+                          <Button
+                            variant="success"
+                            onClick={() => handleApprove(rec.id)}
+                            disabled={actionLoading}
+                            className="fw-semibold px-4"
+                          >
+                            {actionLoading ? (
+                              <Spinner animation="border" size="sm" />
+                            ) : (
+                              "อนุมัติ"
+                            )}
+                          </Button>
+                          <Button
+                            variant="outline-danger"
+                            onClick={() => {
+                              setRejectId(rec.id);
+                              setRejectReason("PRICE_TOO_HIGH");
+                              setRejectNote("");
+                            }}
+                            disabled={actionLoading}
+                            className="fw-semibold px-4"
+                          >
+                            ปฏิเสธ
+                          </Button>
+                        </div>
+                      </Col>
                     )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-        </Card>
+                  </Row>
+                </Card.Body>
+              </Card>
+            );
+          })}
+        </div>
       )}
 
-      {/* Reject Modal */}
+      {/* ── Reject Modal ── */}
       <Modal show={!!rejectId} onHide={() => setRejectId(null)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>ปฏิเสธคำแนะนำ</Modal.Title>
+        <Modal.Header closeButton className="border-0 pb-0">
+          <Modal.Title className="fs-5">
+            ปฏิเสธคำแนะนำ
+          </Modal.Title>
         </Modal.Header>
-        <Modal.Body>
+        <Modal.Body className="pt-2">
+          <p className="text-muted small mb-3">
+            กรุณาเลือกเหตุผลที่ปฏิเสธ เพื่อช่วยให้ AI เรียนรู้และปรับปรุงคำแนะนำในอนาคต
+          </p>
+
           <Form.Group className="mb-3">
-            <Form.Label>เหตุผล *</Form.Label>
-            <Form.Select
-              value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
-            >
+            <Form.Label className="fw-semibold small">เหตุผลในการปฏิเสธ *</Form.Label>
+            <div className="d-flex flex-column gap-2 mt-1">
               {REJECTION_REASONS.map((r) => (
-                <option key={r.value} value={r.value}>
-                  {r.label}
-                </option>
+                <Form.Check
+                  key={r.value}
+                  type="radio"
+                  id={`reject-reason-${r.value}`}
+                  name="rejectionReason"
+                  label={r.label}
+                  value={r.value}
+                  checked={rejectReason === r.value}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  className="py-1"
+                />
               ))}
-            </Form.Select>
+            </div>
           </Form.Group>
+
           <Form.Group>
-            <Form.Label>
-              หมายเหตุ {rejectReason === "OTHER" ? "*" : "(ถ้ามี)"}
+            <Form.Label className="fw-semibold small">
+              หมายเหตุเพิ่มเติม {rejectReason === "OTHER" && <span className="text-danger">*</span>}
             </Form.Label>
             <Form.Control
               as="textarea"
-              rows={2}
+              rows={3}
               value={rejectNote}
               onChange={(e) => setRejectNote(e.target.value)}
-              placeholder="เช่น มีงาน Phuket Food Festival วันที่ 21-23"
+              placeholder="เช่น มีงาน Phuket Food Festival วันที่ 21-23 ทำให้ demand สูงกว่าปกติ"
+              style={{ fontSize: 14 }}
             />
+            <Form.Text className="text-muted">
+              ข้อมูลนี้จะช่วยให้ AI เข้าใจบริบทท้องถิ่นได้ดีขึ้น
+            </Form.Text>
           </Form.Group>
         </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setRejectId(null)}>
+        <Modal.Footer className="border-0 pt-0">
+          <Button
+            variant="light"
+            onClick={() => setRejectId(null)}
+            className="px-4"
+          >
             ยกเลิก
           </Button>
           <Button
             variant="danger"
             onClick={handleReject}
-            disabled={actionLoading}
+            disabled={actionLoading || (rejectReason === "OTHER" && !rejectNote.trim())}
+            className="px-4 fw-semibold"
           >
-            {actionLoading ? "กำลังดำเนินการ..." : "ปฏิเสธ"}
+            {actionLoading ? (
+              <>
+                <Spinner animation="border" size="sm" className="me-1" />
+                กำลังดำเนินการ...
+              </>
+            ) : (
+              "ยืนยันปฏิเสธ"
+            )}
           </Button>
         </Modal.Footer>
       </Modal>

@@ -5,19 +5,27 @@ const LINE_API = "https://api.line.me/v2/bot";
 
 function getHeaders() {
   const token = process.env.LINE_CHANNEL_ACCESS_TOKEN;
-  if (!token) throw new Error("LINE_CHANNEL_ACCESS_TOKEN is not configured");
+  if (!token) return null;
   return {
     "Content-Type": "application/json",
     Authorization: `Bearer ${token}`,
   };
 }
 
+function isDemoMode() {
+  return !process.env.LINE_CHANNEL_ACCESS_TOKEN;
+}
+
 export async function sendLineMessage(userId: string, message: string) {
+  if (isDemoMode()) {
+    logger.info("[DEMO] LINE message skipped", { userId, message: message.substring(0, 50) });
+    return;
+  }
   return withRetry(
     async () => {
       const res = await fetch(`${LINE_API}/message/push`, {
         method: "POST",
-        headers: getHeaders(),
+        headers: getHeaders()!,
         body: JSON.stringify({
           to: userId,
           messages: [{ type: "text", text: message }],
@@ -43,11 +51,15 @@ export async function sendLineFlexMessage(
   altText: string,
   contents: Record<string, unknown>
 ) {
+  if (isDemoMode()) {
+    logger.info("[DEMO] LINE flex message skipped", { userId, altText });
+    return;
+  }
   return withRetry(
     async () => {
       const res = await fetch(`${LINE_API}/message/push`, {
         method: "POST",
-        headers: getHeaders(),
+        headers: getHeaders()!,
         body: JSON.stringify({
           to: userId,
           messages: [

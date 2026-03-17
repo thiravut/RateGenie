@@ -12,6 +12,8 @@ import {
   Col,
   Badge,
   Spinner,
+  Table,
+  Collapse,
 } from "react-bootstrap";
 
 interface Hotel {
@@ -22,6 +24,59 @@ interface Hotel {
   role: string;
   memberCount: number;
   createdAt: string;
+}
+
+interface OtaConnection {
+  otaName: string;
+  status: string;
+  lastSyncAt: string | null;
+  nextSyncAt: string | null;
+  lastError: string | null;
+  retryCount: number;
+}
+
+interface SyncStatus {
+  overallStatus: string;
+  connections: OtaConnection[];
+}
+
+interface RoomTypeMapping {
+  id: string;
+  name: string;
+  agodaName: string | null;
+  bookingName: string | null;
+}
+
+interface SyncHistoryEntry {
+  id: string;
+  otaName: string;
+  status: string;
+  syncedAt: string;
+  details: string | null;
+}
+
+const OTA_COLORS: Record<string, string> = {
+  agoda: "#f27d0c",
+  "booking.com": "#003580",
+  booking: "#003580",
+  expedia: "#fddb32",
+};
+
+function otaBadgeBg(platform: string): string {
+  const key = platform.toLowerCase();
+  return OTA_COLORS[key] ?? "#6c757d";
+}
+
+function timeSince(dateStr: string | null): string {
+  if (!dateStr) return "ยังไม่เคย sync";
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "เมื่อสักครู่";
+  if (mins < 60) return `${mins} นาทีที่แล้ว`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs} ชั่วโมงที่แล้ว`;
+  const days = Math.floor(hrs / 24);
+  return `${days} วันที่แล้ว`;
 }
 
 export default function HotelsPage() {
@@ -43,11 +98,47 @@ export default function HotelsPage() {
   const [inviteRole, setInviteRole] = useState("REVENUE_MANAGER");
   const [inviteLoading, setInviteLoading] = useState(false);
 
+  // Channel management expanded state
+  const [expandedHotel, setExpandedHotel] = useState<string | null>(null);
+  const [syncStatuses, setSyncStatuses] = useState<Record<string, SyncStatus>>(
+    {}
+  );
+  const [roomTypes, setRoomTypes] = useState<
+    Record<string, RoomTypeMapping[]>
+  >({});
+  const [syncHistories, setSyncHistories] = useState<
+    Record<string, SyncHistoryEntry[]>
+  >({});
+  const [channelLoading, setChannelLoading] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState<string | null>(null);
+
   const fetchHotels = useCallback(async () => {
     try {
       const res = await fetch("/api/hotels");
       const data = await res.json();
-      setHotels(data.data ?? []);
+      const list: Hotel[] = data.data ?? [];
+      setHotels(list);
+
+      // Fetch sync status for every hotel in parallel
+      const statusPromises = list.map(async (h) => {
+        try {
+          const r = await fetch(`/api/hotels/${h.id}/sync-status`);
+          if (r.ok) {
+            const s: SyncStatus = await r.json();
+            return { id: h.id, status: s };
+          }
+        } catch {
+          /* ignore */
+        }
+        return { id: h.id, status: null };
+      });
+
+      const results = await Promise.all(statusPromises);
+      const map: Record<string, SyncStatus> = {};
+      results.forEach((r) => {
+        if (r.status) map[r.id] = r.status;
+      });
+      setSyncStatuses(map);
     } catch {
       setError("ไม่สามารถโหลดข้อมูลโรงแรมได้");
     } finally {
@@ -58,6 +149,71 @@ export default function HotelsPage() {
   useEffect(() => {
     fetchHotels();
   }, [fetchHotels]);
+
+  // Fetch channel details when expanding
+  async function loadChannelDetails(hotelId: string) {
+    if (roomTypes[hotelId]) return; // already loaded
+    setChannelLoading(hotelId);
+    try {
+      const [rtRes, histRes] = await Promise.all([
+        fetch(`/api/hotels/${hotelId}/room-types`),
+        fetch(`/api/hotels/${hotelId}/sync-history`),
+      ]);
+
+      if (rtRes.ok) {
+        const rtData = await rtRes.json();
+        setRoomTypes((prev) => ({
+          ...prev,
+          [hotelId]: rtData.data ?? rtData ?? [],
+        }));
+      }
+
+      if (histRes.ok) {
+        const histData = await histRes.json();
+        setSyncHistories((prev) => ({
+          ...prev,
+          [hotelId]: (histData.data ?? histData ?? []).slice(0, 5),
+        }));
+      }
+    } catch {
+      /* ignore */
+    } finally {
+      setChannelLoading(null);
+    }
+  }
+
+  function toggleExpand(hotelId: string) {
+    if (expandedHotel === hotelId) {
+      setExpandedHotel(null);
+    } else {
+      setExpandedHotel(hotelId);
+      loadChannelDetails(hotelId);
+    }
+  }
+
+  async function triggerSync(hotelId: string) {
+    setSyncing(hotelId);
+    try {
+      const res = await fetch(`/api/hotels/${hotelId}/sync`, {
+        method: "POST",
+      });
+      if (res.ok) {
+        setSuccess("เริ่ม sync เรียบร้อย");
+        // Refresh sync status
+        const sr = await fetch(`/api/hotels/${hotelId}/sync-status`);
+        if (sr.ok) {
+          const s: SyncStatus = await sr.json();
+          setSyncStatuses((prev) => ({ ...prev, [hotelId]: s }));
+        }
+      } else {
+        setError("ไม่สามารถ sync ได้");
+      }
+    } catch {
+      setError("เกิดข้อผิดพลาดในการ sync");
+    } finally {
+      setSyncing(null);
+    }
+  }
 
   async function handleCreateHotel(e: React.FormEvent) {
     e.preventDefault();
@@ -163,51 +319,297 @@ export default function HotelsPage() {
           </Card.Body>
         </Card>
       ) : (
-        <Row className="g-3">
-          {hotels.map((hotel) => (
-            <Col key={hotel.id} md={6} lg={4}>
-              <Card className="border-0 shadow-sm h-100">
-                <Card.Body>
-                  <div className="d-flex justify-content-between align-items-start mb-2">
-                    <Card.Title className="mb-0">{hotel.name}</Card.Title>
-                    <Badge bg={hotel.role === "OWNER" ? "primary" : "secondary"}>
-                      {hotel.role === "OWNER" ? "เจ้าของ" : "สมาชิก"}
-                    </Badge>
-                  </div>
-                  {hotel.location && (
-                    <p className="text-muted mb-1">{hotel.location}</p>
-                  )}
-                  <p className="text-muted mb-3">
-                    {hotel.totalRooms > 0 ? `${hotel.totalRooms} ห้อง` : ""}
-                    {hotel.totalRooms > 0 && hotel.memberCount > 0 ? " · " : ""}
-                    {hotel.memberCount > 0
-                      ? `${hotel.memberCount} สมาชิก`
-                      : ""}
-                  </p>
-                  <div className="d-flex gap-2">
-                    <Link href={`/hotels/${hotel.id}/settings`}>
-                      <Button variant="primary" size="sm">
-                        จัดการ
-                      </Button>
-                    </Link>
-                    {hotel.role === "OWNER" && (
-                      <Button
-                        variant="outline-primary"
-                        size="sm"
-                        onClick={() => setShowInvite(hotel.id)}
-                      >
-                        เชิญสมาชิก
-                      </Button>
-                    )}
-                  </div>
-                </Card.Body>
-              </Card>
-            </Col>
-          ))}
-        </Row>
+        <>
+          <Row className="g-3">
+            {hotels.map((hotel) => {
+              const ss = syncStatuses[hotel.id];
+              const isExpanded = expandedHotel === hotel.id;
+
+              return (
+                <Col key={hotel.id} md={6} lg={4}>
+                  <Card
+                    className={`border-0 shadow-sm h-100 ${isExpanded ? "border-primary" : ""}`}
+                  >
+                    <Card.Body>
+                      {/* Header */}
+                      <div className="d-flex justify-content-between align-items-start mb-2">
+                        <Card.Title className="mb-0">{hotel.name}</Card.Title>
+                        <Badge
+                          bg={
+                            hotel.role === "OWNER" ? "primary" : "secondary"
+                          }
+                        >
+                          {hotel.role === "OWNER" ? "เจ้าของ" : "สมาชิก"}
+                        </Badge>
+                      </div>
+
+                      {/* Location */}
+                      {hotel.location && (
+                        <p className="text-muted mb-1 small">
+                          {hotel.location}
+                        </p>
+                      )}
+
+                      {/* Room + member count */}
+                      <p className="text-muted mb-2 small">
+                        {hotel.totalRooms > 0 ? `${hotel.totalRooms} ห้อง` : ""}
+                        {hotel.totalRooms > 0 && hotel.memberCount > 0
+                          ? " \u00b7 "
+                          : ""}
+                        {hotel.memberCount > 0
+                          ? `${hotel.memberCount} สมาชิก`
+                          : ""}
+                      </p>
+
+                      {/* OTA Connection badges */}
+                      {ss && ss.connections.length > 0 && (
+                        <div className="mb-2">
+                          <div className="text-muted small fw-semibold mb-1">
+                            OTA ที่เชื่อมต่อ
+                          </div>
+                          <div className="d-flex flex-wrap gap-1">
+                            {ss.connections.map((conn) => (
+                              <Badge
+                                key={conn.otaName}
+                                pill
+                                style={{
+                                  background:
+                                    conn.status === "CONNECTED"
+                                      ? otaBadgeBg(conn.otaName)
+                                      : "#6c757d",
+                                  fontSize: "0.7rem",
+                                }}
+                              >
+                                {conn.otaName}
+                                {conn.status !== "connected" && " (offline)"}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Sync status */}
+                      {ss && (
+                        <div className="mb-3 d-flex align-items-center gap-2 small">
+                          <span
+                            style={{
+                              display: "inline-block",
+                              width: 8,
+                              height: 8,
+                              borderRadius: "50%",
+                              background: ss.overallStatus === "healthy" ? "#198754" : "#dc3545",
+                              flexShrink: 0,
+                            }}
+                          />
+                          <span className="text-muted">
+                            {ss.overallStatus === "healthy" ? "Sync ปกติ" : "Sync มีปัญหา"}
+                            {" \u00b7 "}
+                            {timeSince(ss.connections[0]?.lastSyncAt ?? null)}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Quick actions */}
+                      <div className="d-flex flex-wrap gap-2">
+                        <Link href={`/hotels/${hotel.id}/settings`}>
+                          <Button variant="primary" size="sm">
+                            จัดการ
+                          </Button>
+                        </Link>
+                        {hotel.role === "OWNER" && (
+                          <Button
+                            variant="outline-primary"
+                            size="sm"
+                            onClick={() => setShowInvite(hotel.id)}
+                          >
+                            เชิญสมาชิก
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline-secondary"
+                          size="sm"
+                          onClick={() => toggleExpand(hotel.id)}
+                        >
+                          {isExpanded ? "ซ่อน OTA" : "ดู OTA connections"}
+                        </Button>
+                      </div>
+                    </Card.Body>
+
+                    {/* ========== CHANNEL MANAGEMENT (Expandable) ========== */}
+                    <Collapse in={isExpanded}>
+                      <div>
+                        <hr className="mx-3 my-0" />
+                        <Card.Body className="pt-3">
+                          {channelLoading === hotel.id ? (
+                            <div className="text-center py-3">
+                              <Spinner
+                                animation="border"
+                                size="sm"
+                                variant="primary"
+                              />
+                              <span className="ms-2 small text-muted">
+                                กำลังโหลดข้อมูล...
+                              </span>
+                            </div>
+                          ) : (
+                            <>
+                              {/* Connected OTAs detail */}
+                              {ss && ss.connections.length > 0 && (
+                                <div className="mb-3">
+                                  <div className="fw-semibold small mb-2">
+                                    สถานะ OTA
+                                  </div>
+                                  {ss.connections.map((conn) => (
+                                    <div
+                                      key={conn.otaName}
+                                      className="d-flex align-items-center justify-content-between mb-1 small"
+                                    >
+                                      <div className="d-flex align-items-center gap-2">
+                                        <span
+                                          style={{
+                                            display: "inline-block",
+                                            width: 8,
+                                            height: 8,
+                                            borderRadius: "50%",
+                                            background:
+                                              conn.status === "CONNECTED"
+                                                ? "#198754"
+                                                : conn.status === "ERROR"
+                                                  ? "#dc3545"
+                                                  : "#6c757d",
+                                          }}
+                                        />
+                                        <span className="fw-semibold">
+                                          {conn.otaName}
+                                        </span>
+                                      </div>
+                                      <span className="text-muted">
+                                        {conn.lastSyncAt
+                                          ? timeSince(conn.lastSyncAt)
+                                          : "ยังไม่เคย sync"}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* Room Type Mapping */}
+                              {roomTypes[hotel.id] &&
+                                roomTypes[hotel.id].length > 0 && (
+                                  <div className="mb-3">
+                                    <div className="fw-semibold small mb-2">
+                                      Room Type Mapping
+                                    </div>
+                                    <Table
+                                      size="sm"
+                                      responsive
+                                      className="small mb-0"
+                                    >
+                                      <thead>
+                                        <tr>
+                                          <th>ประเภทห้อง</th>
+                                          <th>Agoda</th>
+                                          <th>Booking.com</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {roomTypes[hotel.id].map((rt) => (
+                                          <tr key={rt.id}>
+                                            <td>{rt.name}</td>
+                                            <td>
+                                              {rt.agodaName ?? (
+                                                <span className="text-muted">
+                                                  -
+                                                </span>
+                                              )}
+                                            </td>
+                                            <td>
+                                              {rt.bookingName ?? (
+                                                <span className="text-muted">
+                                                  -
+                                                </span>
+                                              )}
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </Table>
+                                  </div>
+                                )}
+
+                              {/* Sync History */}
+                              {syncHistories[hotel.id] &&
+                                syncHistories[hotel.id].length > 0 && (
+                                  <div className="mb-3">
+                                    <div className="fw-semibold small mb-2">
+                                      Sync History (ล่าสุด 5 รายการ)
+                                    </div>
+                                    {syncHistories[hotel.id].map((entry) => (
+                                      <div
+                                        key={entry.id}
+                                        className="d-flex align-items-center justify-content-between small mb-1"
+                                      >
+                                        <div className="d-flex align-items-center gap-2">
+                                          <Badge
+                                            bg={
+                                              entry.status === "success"
+                                                ? "success"
+                                                : entry.status === "partial"
+                                                  ? "warning"
+                                                  : "danger"
+                                            }
+                                            style={{ fontSize: "0.65rem" }}
+                                          >
+                                            {entry.status === "success"
+                                              ? "สำเร็จ"
+                                              : entry.status === "partial"
+                                                ? "บางส่วน"
+                                                : "ล้มเหลว"}
+                                          </Badge>
+                                          <span>{entry.otaName}</span>
+                                        </div>
+                                        <span className="text-muted">
+                                          {timeSince(entry.syncedAt)}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+
+                              {/* Sync Now button */}
+                              <Button
+                                variant="outline-primary"
+                                size="sm"
+                                disabled={syncing === hotel.id}
+                                onClick={() => triggerSync(hotel.id)}
+                              >
+                                {syncing === hotel.id ? (
+                                  <>
+                                    <Spinner
+                                      animation="border"
+                                      size="sm"
+                                      className="me-1"
+                                    />
+                                    กำลัง sync...
+                                  </>
+                                ) : (
+                                  "Sync ตอนนี้"
+                                )}
+                              </Button>
+                            </>
+                          )}
+                        </Card.Body>
+                      </div>
+                    </Collapse>
+                  </Card>
+                </Col>
+              );
+            })}
+          </Row>
+        </>
       )}
 
-      {/* Create Hotel Modal */}
+      {/* ========== Create Hotel Modal ========== */}
       <Modal show={showCreate} onHide={() => setShowCreate(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>เพิ่มโรงแรมใหม่</Modal.Title>
@@ -255,7 +657,7 @@ export default function HotelsPage() {
         </Form>
       </Modal>
 
-      {/* Invite Modal */}
+      {/* ========== Invite Modal ========== */}
       <Modal show={!!showInvite} onHide={() => setShowInvite(null)} centered>
         <Modal.Header closeButton>
           <Modal.Title>เชิญสมาชิก</Modal.Title>

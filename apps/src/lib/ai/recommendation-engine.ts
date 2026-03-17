@@ -6,9 +6,13 @@ import { withRetry } from "@/utils/retry";
 import { buildPricingPrompt } from "./prompts";
 import type { PricingContext, AIRecommendation } from "./types";
 
+function isDemoMode() {
+  return !process.env.ANTHROPIC_API_KEY;
+}
+
 function getAnthropicClient() {
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured");
+  if (!apiKey) return null;
   return new Anthropic({ apiKey });
 }
 
@@ -102,6 +106,10 @@ async function callClaudeAPI(
   prompt: string
 ): Promise<AIRecommendation[]> {
   const client = getAnthropicClient();
+  if (!client) {
+    logger.info("[DEMO] AI recommendation skipped — no ANTHROPIC_API_KEY");
+    return [];
+  }
 
   const response = await withRetry(
     async () => {
